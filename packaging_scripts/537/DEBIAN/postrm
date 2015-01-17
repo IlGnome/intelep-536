@@ -1,0 +1,5 @@
+#!/bin/bash
+# Version 0.1.0
+# Stephen Pinker
+
+update-rc.d -f 537_boot remove

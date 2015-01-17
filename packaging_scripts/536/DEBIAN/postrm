@@ -1,0 +1,13 @@
+#!/bin/bash
+# Version 0.1.3
+# Stephen Pinker
+
+# Remove sym link in /dev
+rm /dev/modem
+
+# Remove Intel536 from /etc/modules
+MODULES=$(cat /etc/modules | grep -v "Intel536")
+echo "$MODULES" > /etc/modules
+
+exit 0
+

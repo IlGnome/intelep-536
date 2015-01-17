@@ -1,0 +1,1 @@
+KERNEL=="536ep*", SYMLINK+="modem", MODE="0666", OWNER="root", GROUP="dialout"

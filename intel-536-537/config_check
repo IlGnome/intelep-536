@@ -1,0 +1,96 @@
+#!/bin/bash
+#**********************************************************************************
+# Copyright (c) 1999-2002, Intel Corporation 
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without 
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, 
+# this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation 
+# and/or other materials provided with the distribution.
+#
+# 3. Neither the name of Intel Corporation nor the names of its contributors 
+# may be used to endorse or promote products derived from this software 
+# without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS''
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+# EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+#
+#***********************************************************************************
+KERNVER=`uname -r`
+
+echo "   Module precompile check"
+echo "   Current running kernel is: $KERNVER"
+
+
+if [ -a /lib/modules/$KERNVER/build/include/linux/autoconf.h ]; then
+   echo "   /lib/modules...   autoconf.h exists"
+else
+   echo "   /lib/modules...   autoconf.h does not exist"
+   echo "   please install kernel source"
+   exit 1
+fi
+
+if [ "`diff /boot/vmlinuz.autoconf.h /lib/modules/$KERNVER/build/include/linux/autoconf.h`" \
+    == "" ]; then
+   echo "   autoconf.h matches running kernel"
+else
+   echo "***************  WARNING *************************"
+   echo  The autoconf.h file you are about to compile with 
+   echo  is different than the configuration               
+   echo  of the current running kernel: $KERNVER
+   echo  Modules compiled and loaded with a configuration 
+   echo  different than then current running kernel may 
+   echo  cause your system to CRASH!
+   echo "**************************************************"
+   echo " "
+   echo  You will need to syncronize the kernel and build 
+   echo  configurations to create a functional driver for this kernel.
+   echo  call \"make config_sync\" and this script will
+   echo  copy the file /boot/vmlinuz.autoconf.h to 
+   echo  /lib/modules/$KERNVER/build/include/linux/autoconf.h
+   echo  and backup the original autoconf.h as autoconf.bak
+   echo  The same will be done for version.h
+   echo  Then repeat the build and installation procedure over again.
+   exit 2
+fi
+
+if [ "`diff /boot/vmlinuz.version.h /lib/modules/$KERNVER/build/include/linux/version.h`" == "" \
+ ]; then
+   echo "   version.h matches running kernel"
+else
+   echo "***************** WARNING ************************"
+   echo  The version.h file you are about to compile with
+   echo  is different than the version of the current
+   echo  running kernel: $KERNVER
+   echo  Modules compiled and loaded with a different
+   echo  version of kernel headers than the current running
+   echo  kernel may cause your system to CRASH!
+   echo "**************************************************"
+   echo " "
+   echo  You will need to syncronize the kernel and build 
+   echo  configurations to create a functional driver for this kernel.
+   echo  call \"make config_sync\" and this script will
+   echo  copy the file /boot/vmlinuz.version.h to 
+   echo  /lib/modules/$KERNVER/build/include/linux/version.h
+   echo  and backup the original version.h as version.bak
+   echo  The same will be done for autoconf.h
+   echo  Then repeat the build and installation procedure over again.
+   exit 3
+fi
+
+exit 0
+

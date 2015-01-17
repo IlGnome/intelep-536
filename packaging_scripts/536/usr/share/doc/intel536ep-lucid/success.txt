@@ -1,0 +1,67 @@
+(More help- http://groups.google.com/group/ubuntu-modems)
+Congratulations. If you are reading this file then your modem driver should be
+installed properly. Remember to reboot with the proper kernel if the driver was
+not able to be loaded.
+
+
+
+-Quick Info
+
+Your Modem should be accessible from both these locations:
+   /dev/536ep0
+   /dev/modem
+
+Some of the commands in this file are run from a terminal. You can begin
+a terminal session by going here:
+   Applications -> Accessories -> Terminal
+
+
+
+-Connecting to the internet
+
+To connect to the internet for the first time, you will need to use the program
+wvdial. Open a terminal and type in the following.
+   sudo cp /usr/share/doc/intel536ep-lucid/wvdial.conf /etc/wvdial.conf
+   sudo nano /etc/wvdial.conf
+      Put your USERNAME, PASSWORD, and dialup PHONENUMBER in the appropriate
+            areas of the /etc/wvdial.conf file.
+      Press Ctrl-X, save the file and exit the editor.
+   wvdial
+
+
+
+-Getting Gnome-ppp
+
+For connecting to the internet in the future, you will probably want to use the
+graphical program gnome-ppp. First you will need to download this program.
+   sudo apt-get install gnome-ppp -y
+
+Then you will need to configure it. (You may need to logout, then login)
+   Applications -> Internet -> GNOME PPP
+      Type in your Username, Password, and dialup Phone number.
+      Click Setup button
+         Under the 'Modem' tab
+            Device: /dev/536ep0   (or /dev/modem)
+            Type: choose Analogue modem
+            Speed: 115200 or lower
+            Phone Line: Tone
+            Volume: High
+            Wait for dialtone: checked
+         Under the 'Networking' tab
+            Leave Dynamic IP Address and Automatic DNS both enabled
+         Under the 'Options' tab
+            Abort connecting if no dialtone: checked
+            Check carrier line: checked
+            Check default route: checked
+            Ignore terminal strings(stupid mode): checked
+   Close and reopen Gnome-ppp
+   Connect
+
+
+
+-Wrap Up
+
+If you need more help, or would like to help improve this package, 
+please contact us.
+
+http://groups.google.com/group/ubuntu-modems

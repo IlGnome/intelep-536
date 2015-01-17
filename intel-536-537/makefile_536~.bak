@@ -1,0 +1,70 @@
+SHELL=/bin/bash
+CMD_PATH="/bin /usr/bin /sbin /usr/sbin"
+LSPCI=$(shell for i in "$(CMD_PATH)"; do if [ -x  $$i/lspci ]; then echo $$i; fi; done)
+MODEM_TYPE=$(shell $(LSPCI)/lspci -n | awk '{ \
+	vendor_device_ids[0]="8086:1040"; \
+	for (i=0; (i in vendor_device_ids) && (vendor_device_ids[i] != $$3);){ \
+	     i++ \
+	} \
+	if ( i in vendor_device_ids) print "\"536EP\"" \
+	}')
+
+all: 
+	@echo usage: make [536] 
+	@echo or [clean] or 
+	@echo or [install]
+
+clean:
+	cd coredrv; make clean
+	rm -f *.o *.ko
+
+install:
+	rm -f /etc/hamregistry.bin
+	bash Intel536_inst
+
+uninstall:
+	@echo Uninstalling on system V boot like only.
+	@killall hamregistry || echo
+	rm -f `find /etc/ -name Intel536_boot`
+	rm -f /etc/hamregistry.bin
+	rm -f /usr/sbin/hamregistry
+	/sbin/rmmod Intel536
+	rm -f `find /lib/modules -name Intel536.o`
+	rm -f `find /lib/modules -name Intel536.ko`
+	@echo Uninstalling done.
+# 	echo Uninstalling on system V boot like only.
+#	rm -f /etc/init.d/536ep_boot
+#	rm -f /etc/hamregistry.bin
+#	rm -f /etc/init.d/Intel536_boot
+#	rmmod Intel536
+
+check:
+	@bash config_check
+
+config_sync:
+	mv /lib/modules/`uname -r`/build/include/linux/version.h version.bak
+	mv /lib/modules/`uname -r`/build/include/linux/autoconf.h autoconf.bak
+	cp /usr/include/version.h /lib/modules/`uname -r`/build/include/linux/version.h
+	cp /usr/include/autoconf.h /lib/modules/`uname -r`/build/include/linux/autoconf.h
+
+536: 
+	@[ -z $(MODEM_TYPE) ] && \
+	echo " Not a 536EP phone modem board" && \
+	exit; \
+	uname -r|grep "2.6" && \
+	cd coredrv && make INTEL_MODEM=$(MODEM_TYPE) 536core_26 && \
+	cp Intel536.ko .. && cd .. && \
+	strip --strip-debug Intel536.ko && \
+	exit; \
+	ls Intel536.ko >/dev/null 2>&1 ||  uname -r | grep "2.6" && echo "Failed to build driver" && exit; \
+        if [ $(KERNEL_SOURCE_PATH) ]; then \
+	cd coredrv; make TARGET=TARGET_SELAH INTEL_MODEM=$(MODEM_TYPE) 537=536EP KERNEL_SOURCE_PATH=$(KERNEL_SOURCE_PATH) "PSTN_DEF=-DTARGET_SELAH -DTARGET_LINUX -DLINUX" 536core; \
+	else \
+	cd coredrv; make TARGET=TARGET_SELAH KERNEL_INCLUDES=/lib/modules/`uname -r`/build/include \
+       "PSTN_DEF=-DTARGET_SELAH -DTARGET_LINUX -DLINUX" 536core; \
+        fi ; \
+	cp Intel536.o .. ; \
+	if [ -a /boot/vmlinuz.version.h ]; then \
+        cp /boot/vmlinuz.version.h /lib/modules/`uname -r`/build/include/linux/version.h;\
+        fi
+# DO NOT DELETE

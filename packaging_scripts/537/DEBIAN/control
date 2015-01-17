@@ -1,0 +1,17 @@
+Package: intel537ep-lucid
+Version: 1-Philippe.Vouters-Jan2010
+Section: misc
+Priority: optional
+Architecture: i386
+Depends: grep, module-init-tools, linux-image-2.6.32-21-generic | linux-image-2.6.32-22-generic | linux-image-2.6.32-23-generic
+Recommends: bash
+Installed-Size: 4336
+Maintainer: Stephen Pinker <stephenpinker79 at yahoo.com>
+Description: Internal Modem Driver for Intel537EP.
+ This driver is only known to work with Intel
+ 537 "EP" modems. It may not work with other 537*
+ .
+ This driver would not be possible without the
+ continuous dedication from Philippe Vouters.
+ Also, Huge Thanks to Carlos Marcano (aka chuckman78)
+ who compiled this driver and helped to package it.

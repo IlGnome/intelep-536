@@ -1,0 +1,22 @@
+#!/bin/bash
+# Version 0.1.2 Public Domain
+# Stephen Pinker
+
+# Package files should already be copied onto system.
+
+echo "Intel537EP Modem Driver and Boot Scripts copied successfully"
+
+echo "Updating modules (/sbin/depmod)"
+/sbin/depmod
+
+echo "Installing boot scripts"
+update-rc.d 537_boot start 99 2 3 4 5 .
+
+echo "Loading 537EP driver"
+/etc/init.d/537_boot restart || echo "Please restart your system using a Lucid kernel."
+
+echo
+echo
+echo "Please Now read the file: /usr/share/doc/intel537ep-lucid/success.txt"
+xmessage "Please Read File: /usr/share/doc/intel537ep-lucid/success.txt" 2> /dev/null
+exit 0

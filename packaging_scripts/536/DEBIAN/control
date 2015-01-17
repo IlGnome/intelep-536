@@ -1,0 +1,15 @@
+Package: intel536ep-lucid
+Version: 1-Philippe.Vouters-Jan2010
+Section: misc
+Priority: optional
+Architecture: i386
+Depends: grep, module-init-tools, linux-image-2.6.32-21-generic | linux-image-2.6.32-22-generic | linux-image-2.6.32-23-generic
+Recommends: bash
+Installed-Size: 1232
+Maintainer: Stephen Pinker <stephenpinker79 at yahoo.com>
+Description: Internal Modem Driver for Intel536ep.
+ Intel has not updated this driver in years.
+ This is the Mar2008 release from Philippe Vouters.
+ Philippe has been continuously keeping this driver
+ compiling with newer kernels.
+ Thank you Philippe for everything!

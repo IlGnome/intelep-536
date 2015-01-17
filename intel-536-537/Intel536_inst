@@ -1,0 +1,213 @@
+#!/bin/bash
+#**********************************************************************************
+# Copyright (c) 1999-2004, Intel Corporation 
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without 
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, 
+# this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation 
+# and/or other materials provided with the distribution.
+#
+# 3. Neither the name of Intel Corporation nor the names of its contributors 
+# may be used to endorse or promote products derived from this software 
+# without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS''
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+# EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+#
+#***********************************************************************************
+
+KERNVER=`uname -r`
+echo "running kernel $KERNVER"
+
+if [ ${BUILD_ROOT} ]
+then
+   KERNVER=`cat ${KERNEL_SOURCE}/include/linux/version.h | grep UTS_RELEASE | awk ' { print $3 } ' | awk -F\" ' { print $2 } '`
+   CharModDir=${BUILD_ROOT}/lib/modules/${KERNVER}/kernel/drivers/char
+   echo "Target kernel version is $KERNVER"
+else
+   CharModDir=/lib/modules/${KERNVER}/kernel/drivers/char
+fi
+
+case $KERNVER in
+   2.4*)
+      KMS="o"	# Kernel Module Suffix
+      ;;
+   2.6*)
+      KMS="ko"	# Kernel Module Suffix
+      ;;
+   *)
+      echo "unsupported kernel version: only 2.4.x and 2.6.x are supported"
+      exit 1
+      ;;
+esac
+
+if [ ! -d ${CharModDir} ]
+then
+   echo "Creating ${CharModDir}"
+   if [ ! -d /lib/modules/${KERNVER}/kernel/drivers ]
+   then
+      mkdir /lib/modules/${KERNVER}/kernel/drivers
+   fi
+   mkdir ${CharModDir}
+fi
+
+if [ -a ./hamregistry.bin ]
+then
+   mv -f /etc/hamregistry.bin /etc/hamregistry.bak
+   cp ./hamregistry.bin /etc/hamregistry.bin
+else
+   rm -f /etc/hamregistry.bin
+fi
+
+echo "installing hamregistry, used for persistant storage"
+install -o root -g root -m 110 hamregistry /usr/sbin
+
+echo "installing Intel536 driver"
+install -o root -g root -m 744 Intel536.${KMS} ${CharModDir}/Intel536.${KMS} || exit 1
+   
+# determine distribution:
+D=`ls /etc/*-release 2>/dev/null | tr [:upper:] [:lower:]`;
+
+case $D in
+   *lsb*) D=`sed -r 's/DISTRIB_ID=(\w+)/\1/' /etc/lsb-release | tr [:upper:] [:lower:]`;;
+esac
+
+case $D in
+   *mandrake*)	DISTRIB_ID=MANDRAKE;;
+   *suse*)	DISTRIB_ID=SUSE;;
+   *redhat*)	DISTRIB_ID=REDHAT;;
+   *redflag*)	DISTRIB_ID=REDFLAG;;
+   *conectiva*)	DISTRIB_ID=CONECTIVA;;
+   *ubuntu*)	DISTRIB_ID=UBUNTU;;
+   *debian*)	DISTRIB_ID=DEBIAN;;
+   *slackware*)	DISTRIB_ID=SLACKWARE;;
+   *gentoo*)	DISTRIB_ID=GENTOO;;
+   *knoppix*)   DISTRIB_ID=KNOPPIX;;
+esac
+
+case $DISTRIB_ID in
+   SUSE)
+      DISTVER=`grep VERSION /etc/SuSE-release | cut -f3 -d' '`
+      echo "SuSE version ${DISTVER}"
+      case $DISTVER in
+         6.*| 7.* )
+            echo "SuSE 6,7 boot scripts"
+            INITDIR='/sbin/init.d'
+            ;;
+         5.* | 4.* | 3.* | 2.* | 1.*)
+            echo "unsupported SuSE version. no boot scripts installed"
+            exit 1
+            ;;
+         *)
+            echo "SuSE boot scripts"
+            INITDIR='/etc/init.d'
+            ;;
+      esac
+   
+      echo "SuSE rc3.d and rc5.d scripts"
+      if [[ $DISTVER < 10. ]]
+      then
+          install -o root -g root -m 110 Intel536_boot $INITDIR
+          ln -s -f ${INITDIR}/Intel536_boot ${INITDIR}/boot.d/S99_Intel536
+          ln -s -f ${INITDIR}/Intel536_boot ${INITDIR}/rc3.d/S99_Intel536
+          ln -s -f ${INITDIR}/Intel536_boot ${INITDIR}/rc5.d/S99_Intel536
+      else
+          echo "#!/bin/sh >" ${INITDIR}/536EP
+          echo "### BEGIN INIT INFO >>" ${INITDIR}/536EP
+          echo "# Provides:          Intel536_boot" >> ${INITDIR}/536EP
+          echo "# Required-Start:    \$syslog" >> ${INITDIR}/536EP
+          echo "# Required-Stop:     \$syslog" >> ${INITDIR}/536EP
+          echo "# Default-Start:     3 5" >> ${INITDIR}/536EP
+          echo "# Default-Stop:      1 2" >> ${INITDIR}/536EP
+          echo "# Description:       Start Intel 536EP driver" >> ${INITDIR}/536EP
+          echo "### END INIT INFO" >> ${INITDIR}/536EP
+          cat ${INITDIR}/536EP Intel536_boot > ${INITDIR}/Intel536_boot
+          chown root.root ${INITDIR}/Intel536_boot
+          chmod 755 ${INITDIR}/Intel536_boot
+          insserv ${INITDIR}/Intel536_boot
+          rm ${INITDIR}/536EP
+      fi
+      ;;
+
+   MANDRAKE | REDHAT | REDFLAG | KNOPPIX)
+      echo "install ${DISTRIB_ID} Intel536 boot script and links"
+      install -o root -g root -m 110 Intel536_boot /etc/rc.d/init.d
+      /sbin/chkconfig Intel536_boot on
+#      ln -s -f /etc/rc.d/init.d/Intel536_boot /etc/rc.d/rc2.d/S99_Intel536
+#      ln -s -f /etc/rc.d/init.d/Intel536_boot /etc/rc.d/rc3.d/S99_Intel536
+#      ln -s -f /etc/rc.d/init.d/Intel536_boot /etc/rc.d/rc5.d/S99_Intel536
+      ;;
+
+   CONECTIVA)
+      echo "install ${DISTRIB_ID} Intel536 boot script and links"
+      install -o root -g root -m 755 Intel536_boot /etc/rc.d/init.d
+      ln -s -f /etc/rc.d/init.d/Intel536_boot /etc/rc.d/rc3.d/S99_Intel536
+      ln -s -f /etc/rc.d/init.d/Intel536_boot /etc/rc.d/rc5.d/S99_Intel536
+      ;;
+
+   DEBIAN | UBUNTU)
+      echo "install ${DISTRIB_ID} Intel536 boot script and links"
+      install -o root -g root -m 110 Intel536_boot /etc/init.d
+      ln -s -f /etc/init.d/Intel536_boot /etc/rc2.d/S99_Intel536
+      ln -s -f /etc/init.d/Intel536_boot /etc/rc3.d/S99_Intel536
+      ln -s -f /etc/init.d/Intel536_boot /etc/rc4.d/S99_Intel536
+      ln -s -f /etc/init.d/Intel536_boot /etc/rc5.d/S99_Intel536
+      ;;
+
+   GENTOO)
+      echo "install ${DISTRIB_ID} Intel536 boot script and links"
+      install -o root -g root -m 755 Intel536_boot /etc/init.d
+      rc-update add Intel536_boot default
+
+      echo "arrange for module installation at bootup"
+      case $KERNVER in
+         2.4*) MAF=/etc/modules.autoload.d/kernel-2.4;;
+         2.6*) MAF=/etc/modules.autoload.d/kernel-2.6;;
+      esac
+      if !(grep -q Intel536 ${MAF})
+      then
+         echo "Intel536" >> ${MAF}
+      fi
+      ;;
+
+  SLACKWARE)
+      echo "install ${DISTRIB_ID} Intel536 boot script and links"
+      install -o root -g root -m 110 Intel536_boot /etc/rc.d/rc.intel536
+      # add the script to /etc/rc.local
+      if [ "`grep rc.intel536 /etc/rc.d/rc.local`" == "" ]
+      then
+         echo "
+# Load modem drivers
+if [ -x /etc/rc.d/rc.intel536 ]; then
+  . /etc/rc.d/rc.intel536 start
+fi
+}" >> /etc/rc.d/rc.local
+      fi
+      ;;
+
+   *)
+      echo "unknown distribution - no boot scripts have been installed"
+      exit 1
+      ;;
+
+esac
+
+echo "starting module and utilities"
+/sbin/depmod -A
+/bin/bash Intel536_boot restart
+echo "done"

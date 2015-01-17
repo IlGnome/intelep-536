@@ -1,0 +1,61 @@
+#!/bin/bash
+# Version 0.1.5 Public Domain
+# Stephen Pinker
+
+# Package files should already be copied onto system.
+
+function RUN {
+	eval $@ && echo "OK" || ERR
+}
+
+function ERR {
+	echo "FAILED"
+	echo
+	echo "THE INSTALL DID NOT COMPLETE"
+	echo "You still may be able to use the driver, but to complete the installation steps, see the file:"
+	echo "/usr/share/doc/intel536ep-lucid/LastResort.html"
+	echo "/usr/share/doc/intel536ep-lucid/LastResort.html"
+	echo
+	echo "Please report errors to:stephenpinker79 at yahoo.com"
+	xmessage "INSTALL DID NOT COMPLETE. Please Read: /usr/share/doc/intel536ep-lucid/LastResort.html" 2> /dev/null
+	exit 0
+}
+
+# This function clean garbage from early driver versions.
+function CLEAN_DIBRIS {
+	rm /etc/modules.Intel536.backup
+	rm /etc/udev/rules.d/10-local.rules.Intel536.backup
+}
+
+CLEAN_DIBRIS
+
+rm /dev/modem 2> /dev/null
+ln -s 536ep0 /dev/modem
+
+echo "Intel536 Modem Driver copied successfully"
+
+echo -n "Updating modules (/sbin/depmod):     "
+RUN "/sbin/depmod"
+
+if [ -z $(grep "Intel536" /etc/modules) ]; then
+	echo -n "Adding Intel536 to /etc/modules:     "
+	RUN "echo Intel536 >> /etc/modules"
+fi
+
+echo
+echo
+echo "SUCCESSFUL INSTALL!"
+
+# Attempt loading the module. This will fail if not currently using the default kernel.
+if /sbin/modprobe Intel536 2> /dev/null; then
+	chown root:dialout /dev/536ep*
+	chmod 660 /dev/536ep*
+	echo "The driver has been loaded. You may begin using your modem now."
+else
+	echo "The driver was Not able to be loaded. This is most likely because you are Not using the standard Ubuntu Lucid kernel(2.6.32-21-generic). Simply reboot using that kernel."
+fi
+
+echo
+echo "Please Now read the file: /usr/share/doc/intel536ep-lucid/success.txt"
+xmessage "Please Read File: /usr/share/doc/intel536ep-lucid/success.txt" 2> /dev/null
+exit 0

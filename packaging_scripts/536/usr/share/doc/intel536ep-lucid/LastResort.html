@@ -1,0 +1,71 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+  <meta name="keywords"
+ content="smartlink modem winmodem linmodem networking scanmodem sl-modem intel linuxant conexant hsf hcf wvdial ppp">
+  <meta name="robots" content="index,nofollow">
+  <title>DialupModemHowto/Intel536EP - Community Ubuntu Documentation</title>
+</head>
+<body dir="ltr" lang="en">
+<script xmlns="" src="https://ssl.google-analytics.com/urchin.js"
+ type="text/javascript"></script>
+<script xmlns="" type="text/javascript"><![CDATA[
+                    _uacct = "UA-1018242-8";
+                    urchinTracker();
+            ]]></script>
+<div id="page" dir="ltr" lang="en">
+<div id="content" dir="ltr" lang="en">
+<h3 id="head-4f0c3f0b68ebce98b0e377a3b52a9c6f1f9aab04">Installing the
+driver</h3>
+<ul>
+  <li style="list-style-type: none;">
+    <p>You may be prompted for a password; if so, enter your user
+password. </p>
+    <p>Make your system aware of this module with <tt>depmod</tt>: </p>
+    <pre>  sudo depmod -a<br> </pre>
+    <p>Finally, load the driver with the <tt>modprobe</tt> command: </p>
+    <pre>  sudo modprobe Intel536<br> </pre>
+    <p>This command should not print a response; if it prints a error
+message, you may not be using the default Ubuntu Gutsy 7.10 kernel, or 
+you may not have a Intel
+536-based modem. </p>
+    <p><em>Loading the driver at boot time</em> </p>
+    <p>To load the module at boot time, we need to add a line "<tt>Intel536</tt>"
+to the file /etc/modules. First make a backup of the file: </p>
+    <pre>  sudo cp /etc/modules /etc/modules.backup<br> </pre>
+    <p>Now add the required line as follows: </p>
+    <pre>  sudo sh -c "echo Intel536 &gt;&gt; /etc/modules"<br> </pre>
+  </li>
+</ul>
+<h3 id="head-688444fd59c198fa7dadd8fa70d1b4cafa615d4c">Using the modem</h3>
+<ul>
+  <li style="list-style-type: none;">
+    <p>The name of your modem device is <tt>/dev/536ep0</tt>. </p>
+  </li>
+</ul>
+<p>You should now 
+create a symlink to /dev/536ep0 from /dev/modem. Udev
+rewrites the /dev on each reboot and you thus have to create a file
+/etc/udev/rules.d/10-local.rules and put the following lines in it: </p>
+<ul>
+  <li style="list-style-type: none;">
+    <pre>  # Intelmodem536ep<br>  KERNEL=="536ep0", SYMLINK=="modem"<br> </pre>
+  </li>
+</ul>
+<p>
+</p>
+<h1>AFTER COMPLETING THE STEPS, VIEW THIS FILE:</h1>
+<a 
+href="/usr/share/doc/intel536ep-gutsy/success.txt">/usr/share/doc/intel536ep-gutsy/success.txt</a>
+<br>
+<br>
+<br>
+</div>
+</div>
+<div id="footer">
+<div id="ubuntulinks"><!-- &mdash; 
+     <a href="http://www.ubuntu.com/sitemap">Site Map</a>--></div>
+</div>
+</body>
+</html>

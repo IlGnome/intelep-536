@@ -1,0 +1,110 @@
+#!/bin/sh
+#
+# Intel536_boot      Start Intel536EP driver 
+#
+# chkconfig: 235 99 01  
+# description:  Starts, stops and restart Intel536EP driver 
+#
+#*******************************************************************************
+# Copyright (c) 1999-2004, Intel Corporation 
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without 
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, 
+# this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation 
+# and/or other materials provided with the distribution.
+#
+# 3. Neither the name of Intel Corporation nor the names of its contributors 
+# may be used to endorse or promote products derived from this software 
+# without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS''
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+# EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+#
+#***********************************************************************************
+# 13-6-2002:  A few hacks by Diego Iastrubni <dgi_il@hotmail.com>
+
+serial="Intel536"
+devnode="/dev/536ep"
+device="536ep"
+registry="hamregistry"
+group="root"
+mode="666"
+
+
+if [ -a /etc/SuSE-release ]; then
+{
+   group="dialout"
+}
+fi
+
+case "$1" in
+   start | b)
+      if ! ( modprobe $serial )
+      then
+         if ! ( insmod -f $serial ); then
+            echo "error loading $serial"
+            rmmod $serial
+            exit 1
+         fi
+      fi
+      major=`cat /proc/devices | awk "\\$2==\"$device\" {print \\$1}"`
+      rm -f $devnode
+      mknod $devnode c $major 1
+      chgrp $group $devnode
+      chmod $mode  $devnode
+      ln -sf $devnode /dev/modem
+      if ! ps -C $registry 1> /dev/null 2> /dev/null; then
+         if ! ( /usr/sbin/$registry  2> /dev/null 1> /dev/null & ); then
+             echo "Modem registry ($registry) could not start."
+             echo "Please see international users secion in readme.txt for more info."
+         fi
+      fi
+      exit 0
+      ;;
+   stop)
+      rmmod $serial 1> /dev/null 2> /dev/null
+      ;;
+   restart | reload)
+     /bin/bash "$0" stop
+     /bin/bash "$0" start
+     exit 0
+     ;;
+   status)
+     if /sbin/lsmod | grep "$serial " >/dev/null
+     then
+       /sbin/lsmod | grep "$serial "
+     else
+       echo "$serial NOT loaded"
+     fi
+     
+     if  ps -C $registry 1> /dev/null 2> /dev/null
+     then
+        ps -C $registry 
+     else
+        echo "$registry NOT running"
+     fi
+
+     exit 0
+     ;;
+   *)
+     echo "unknown $serial script parameter"
+     exit 1
+esac
+
+exit 0
+

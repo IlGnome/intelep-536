@@ -1,0 +1,38 @@
+SHELL=/bin/bash
+
+all:
+	@echo usage:; \
+	echo make [clean] or; \
+	echo make [536] or [537] or; \
+	echo make [install] or; \
+	echo make [uninstall] or;\
+	echo make [check] or [config_sync];
+
+clean:
+	cd coredrv; make clean
+	rm -f *.o *.ko
+
+536: clean check
+	@make -f makefile_536 536
+
+537: clean check
+	@make -f makefile_537 537
+
+install:
+	@[ -f Intel536.*o ] && make -f makefile_536 install; \
+	[ -f Intel537.*o ] && make -f makefile_537 install; \
+	exit 0
+
+uninstall:
+	@[ -c /dev/536ep0 ] && make -f makefile_536 uninstall; \
+	[ -c /dev/537ep0 ] && make -f makefile_537 uninstall; \
+	exit 0
+
+check:
+	@bash config_check
+
+config_sync:
+	mv /lib/modules/`uname -r`/build/include/linux/version.h version.bak
+	mv /lib/modules/autoconf.h autoconf.bak
+	cp /boot/vmlinuz.version.h /lib/modules/`uname -r`/build/include/linux/version.h
+	cp /boot/vmlinuz.autoconf.h /lib/modules/`uname -r`/build/include/linux/autoconf.h

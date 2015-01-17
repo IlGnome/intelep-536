@@ -1,0 +1,7 @@
+The installation and removal scripts are licensed under the BSD license. For
+further information please see /usr/share/common-licenses/BSD.
+
+The binary driver is licensed under Intel's license. See the file license.txt.
+
+I believe everything else is public domain.
+Stephen Pinker
